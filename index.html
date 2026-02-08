@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI活用セミナー質問回答 - 動画プレイヤー</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.95;
+        }
+
+        .notebooklm-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .notebooklm-link:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.8);
+            transform: translateY(-2px);
+        }
+
+        .notebooklm-link::before {
+            content: "📚 ";
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 0;
+        }
+
+        .video-section {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-btn.rewind {
+            background: #667eea;
+            color: white;
+        }
+
+        .control-btn.play-pause {
+            background: #28a745;
+            color: white;
+        }
+
+        .control-btn.forward {
+            background: #764ba2;
+            color: white;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .speed-control label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .speed-control select {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .share-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+        }
+
+        .share-section h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .share-section p {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .toc-section {
+            background: white;
+            border-left: 1px solid #e9ecef;
+            overflow-y: auto;
+            max-height: calc(100vh - 200px);
+        }
+
+        .toc-header {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .toc-header h2 {
+            font-size: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toc-content {
+            padding: 20px;
+        }
+
+        .toc-chapter {
+            margin-bottom: 8px;
+        }
+
+        .toc-item {
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            border-left: 3px solid transparent;
+        }
+
+        .toc-item:hover {
+            background: #f8f9fa;
+            border-left-color: #667eea;
+        }
+
+        .toc-item.active {
+            background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%);
+            border-left-color: #667eea;
+        }
+
+        .toc-item.main-chapter {
+            font-weight: 700;
+            background: linear-gradient(135deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%);
+            font-size: 15px;
+        }
+
+        .toc-item.sub-chapter {
+            font-size: 14px;
+            padding-left: 30px;
+            color: #555;
+        }
+
+        .time-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #667eea;
+            color: white;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 55px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .toc-item.sub-chapter .time-badge {
+            background: #764ba2;
+        }
+
+        .toc-text {
+            flex: 1;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .toc-section {
+                border-left: none;
+                border-top: 1px solid #e9ecef;
+                max-height: 500px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px 15px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .header p {
+                font-size: 14px;
+            }
+
+            .video-section {
+                padding: 15px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .control-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .toc-content {
+                padding: 15px;
+            }
+
+            .toc-item {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+
+            .toc-item.sub-chapter {
+                padding-left: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI活用セミナー質問回答 - 動画プレイヤー</h1>
+            <p>現場の悩みから始めるAI活用ワークショップ</p>
+            <a href="https://notebooklm.google.com/notebook/3eb65556-36f3-44ca-86af-17f03e311162" target="_blank" class="notebooklm-link">復習用 NotebookLM で開く</a>
+        </div>
+
+        <div class="main-content">
+            <div class="video-section">
+                <div class="video-wrapper">
+                    <iframe 
+                        id="videoPlayer"
+                        src="https://www.youtube.com/embed/Y7W6nFsQh0E?enablejsapi=1&rel=0&modestbranding=1" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                    </iframe>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn rewind" onclick="skipTime(-10)">
+                        <span>⏪</span> -10秒
+                    </button>
+                    <button class="control-btn play-pause" onclick="togglePlayPause()">
+                        <span id="playIcon">▶</span> <span id="playText">再生/停止</span>
+                    </button>
+                    <button class="control-btn forward" onclick="skipTime(10)">
+                        <span>⏩</span> +10秒
+                    </button>
+                </div>
+
+                <div class="speed-control">
+                    <label for="playbackRate">再生速度:</label>
+                    <select id="playbackRate" onchange="changePlaybackRate()">
+                        <option value="0.5">0.5x</option>
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1.0x (通常)</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="1.75">1.75x</option>
+                        <option value="2">2.0x</option>
+                    </select>
+                </div>
+
+                <div class="share-section">
+                    <h3>📤 現在の位置を共有</h3>
+                    <p>タイムスタンプをクリックすると共有URLが表示されます</p>
+                </div>
+            </div>
+
+            <div class="toc-section">
+                <div class="toc-header">
+                    <h2>📚 目次</h2>
+                </div>
+                <div class="toc-content" id="tocContent">
+                    <!-- 目次はJavaScriptで生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let player;
+        let isPlayerReady = false;
+
+        // YouTube IFrame API の読み込み
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // 目次データ
+        const tocData = [
+            {
+                time: "00:00",
+                title: "イントロダクション",
+                isMain: true,
+                children: [
+                    { time: "00:00", title: "挨拶と趣旨説明" },
+                    { time: "00:33", title: "5つのテーマ紹介" },
+                    { time: "00:49", title: "佐藤先生紹介" },
+                    { time: "01:40", title: "Human-in-the-Loopの重要性" },
+                    { time: "02:18", title: "5つのテーマ詳細" }
+                ]
+            },
+            {
+                time: "02:44",
+                title: "型作りの型作り（ジェム作成実演）",
+                isMain: true,
+                children: [
+                    { time: "02:44", title: "問題提起" },
+                    { time: "04:04", title: "NotebookLMでリサーチ" },
+                    { time: "07:34", title: "ジェミニのジェム機能解説" },
+                    { time: "08:40", title: "ジェミニでジェム作成" },
+                    { time: "11:40", title: "ジェムとは？" },
+                    { time: "12:00", title: "実践例：「伝わる話し方」ジェム作成" },
+                    { time: "17:00", title: "型作りの応用" }
+                ]
+            },
+            {
+                time: "25:06",
+                title: "Q1: AI導入とセキュリティ",
+                isMain: true
+            },
+            {
+                time: "27:05",
+                title: "Q2: 業務効率化とAI秘書化",
+                isMain: true
+            },
+            {
+                time: "29:14",
+                title: "Q3: 論文検索と知識管理",
+                isMain: true,
+                children: [
+                    { time: "29:14", title: "論文検索ツール" },
+                    { time: "29:32", title: "オープンエビデンス" },
+                    { time: "32:14", title: "Perplexityの使い方" },
+                    { time: "36:28", title: "論文・知識管理方法" },
+                    { time: "39:10", title: "ハルシネーション対策" }
+                ]
+            },
+            {
+                time: "42:52",
+                title: "Q4: プレゼン・チラシ・画像作成",
+                isMain: true,
+                children: [
+                    { time: "43:00", title: "プレゼン資料作成の概要" },
+                    { time: "43:12", title: "Genspark でのスライド作成" },
+                    { time: "45:07", title: "Claudeでのスライド作成" },
+                    { time: "48:53", title: "まじん式スライド" },
+                    { time: "54:06", title: "ポスター・チラシ作成" },
+                    { time: "56:56", title: "NotebookLMスライド作成" }
+                ]
+            },
+            {
+                time: "59:05",
+                title: "Q5: ケアプラン・臨床データ分析",
+                isMain: true,
+                children: [
+                    { time: "59:05", title: "ケアプラン作成" },
+                    { time: "60:50", title: "臨床データの分析" },
+                    { time: "63:20", title: "Excelフォーマット作成" }
+                ]
+            },
+            {
+                time: "65:20",
+                title: "まとめ",
+                isMain: true,
+                children: [
+                    { time: "65:20", title: "Human-in-the-Loop の再確認" }
+                ]
+            }
+        ];
+
+        // 時刻を秒に変換
+        function timeToSeconds(timeStr) {
+            const parts = timeStr.split(':');
+            if (parts.length === 2) {
+                return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+            }
+            return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+        }
+
+        // YouTube Player API の準備完了時に呼ばれる
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('videoPlayer', {
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            isPlayerReady = true;
+            console.log('Player ready');
+            
+            // URLのハッシュから時刻を取得
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#t=')) {
+                const timeStr = hash.substring(3);
+                const seconds = timeToSeconds(timeStr);
+                setTimeout(() => {
+                    player.seekTo(seconds, true);
+                }, 500);
+            }
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.PLAYING) {
+                document.getElementById('playIcon').textContent = '⏸';
+            } else {
+                document.getElementById('playIcon').textContent = '▶';
+            }
+        }
+
+        // 目次の生成
+        function generateTOC() {
+            const tocContent = document.getElementById('tocContent');
+            tocContent.innerHTML = '';
+
+            tocData.forEach(chapter => {
+                const chapterDiv = document.createElement('div');
+                chapterDiv.className = 'toc-chapter';
+
+                const mainItem = createTOCItem(chapter.time, chapter.title, chapter.isMain, false);
+                chapterDiv.appendChild(mainItem);
+
+                if (chapter.children) {
+                    chapter.children.forEach(child => {
+                        const childItem = createTOCItem(child.time, child.title, false, true);
+                        chapterDiv.appendChild(childItem);
+                    });
+                }
+
+                tocContent.appendChild(chapterDiv);
+            });
+        }
+
+        function createTOCItem(time, title, isMain, isSub) {
+            const item = document.createElement('div');
+            item.className = 'toc-item';
+            if (isMain) item.classList.add('main-chapter');
+            if (isSub) item.classList.add('sub-chapter');
+            
+            item.innerHTML = `
+                <span class="time-badge">${time}</span>
+                <span class="toc-text">${title}</span>
+            `;
+            
+            item.onclick = () => seekToTime(time);
+            return item;
+        }
+
+        function seekToTime(timeStr) {
+            if (!isPlayerReady) {
+                alert('プレイヤーの準備中です。少しお待ちください。');
+                return;
+            }
+
+            const seconds = timeToSeconds(timeStr);
+            player.seekTo(seconds, true);
+            player.playVideo();
+            
+            // アクティブ状態の更新
+            document.querySelectorAll('.toc-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // URLを更新
+            window.history.pushState(null, '', `#t=${timeStr}`);
+            
+            // 共有メッセージ
+            const shareSection = document.querySelector('.share-section p');
+            const shareUrl = window.location.href;
+            shareSection.innerHTML = `共有URL: <a href="${shareUrl}" target="_blank">${shareUrl}</a>`;
+        }
+
+        function togglePlayPause() {
+            if (!isPlayerReady) return;
+            
+            const state = player.getPlayerState();
+            if (state === YT.PlayerState.PLAYING) {
+                player.pauseVideo();
+            } else {
+                player.playVideo();
+            }
+        }
+
+        function skipTime(seconds) {
+            if (!isPlayerReady) return;
+            
+            const currentTime = player.getCurrentTime();
+            player.seekTo(currentTime + seconds, true);
+        }
+
+        function changePlaybackRate() {
+            if (!isPlayerReady) return;
+            
+            const rate = parseFloat(document.getElementById('playbackRate').value);
+            player.setPlaybackRate(rate);
+        }
+
+        // 初期化
+        generateTOC();
+    </script>
+</body>
+</html>
